@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nuevo Presupuesto</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 30px 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .header h1 {
+      font-size: 22px;
+      color: #1a1a2e;
+      margin-bottom: 4px;
+    }
+    .header p {
+      font-size: 13px;
+      color: #888;
+    }
+    .field {
+      margin-bottom: 18px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: bold;
+      color: #444;
+      margin-bottom: 6px;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      font-size: 15px;
+      color: #333;
+      outline: none;
+      transition: border 0.2s;
+      background: #fafafa;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: #1a1a2e;
+      background: white;
+    }
+    textarea { resize: vertical; min-height: 80px; }
+    .servicios-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .servicio-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #fafafa;
+    }
+    .servicio-item:hover { border-color: #1a1a2e; }
+    .servicio-item.selected {
+      border-color: #1a1a2e;
+      background: #e8eaf6;
+    }
+    .servicio-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: #1a1a2e;
+    }
+    .servicio-item span {
+      font-size: 13px;
+      color: #333;
+    }
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: #1a1a2e;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: #2d2d5e; }
+    .btn:disabled { background: #999; cursor: not-allowed; }
+    .mensaje {
+      display: none;
+      text-align: center;
+      padding: 16px;
+      border-radius: 8px;
+      margin-top: 16px;
+      font-size: 14px;
+    }
+    .mensaje.exito { background: #e8f5e9; color: #2e7d32; }
+    .mensaje.error { background: #ffebee; color: #c62828; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📋 Nuevo Presupuesto</h1>
+      <p>Completá los datos del cliente y el vehículo</p>
+    </div>
+
+    <div class="field">
+      <label>Nombre del cliente *</label>
+      <input type="text" id="nombre" placeholder="Ej: Juan Pérez" required>
+    </div>
+
+    <div class="field">
+      <label>Teléfono *</label>
+      <input type="tel" id="telefono" placeholder="Ej: 2234567890">
+    </div>
+
+    <div class="field">
+      <label>Patente *</label>
+      <input type="text" id="patente" placeholder="Ej: ABC123" style="text-transform:uppercase">
+    </div>
+
+    <div class="field">
+      <label>Vehículo (marca y modelo) *</label>
+      <input type="text" id="vehiculo" placeholder="Ej: Ford Focus 2018">
+    </div>
+
+    <div class="field">
+      <label>Servicios solicitados *</label>
+      <div class="servicios-grid" id="serviciosGrid">
+        <div class="servicio-item" onclick="toggleServicio(this)">
+          <input type="checkbox" value="Cambio de aceite">
+          <span>Cambio de aceite</span>
+        </div>
+        <div class="servicio-item" onclick="toggleServicio(this)">
+          <input type="checkbox" value="Alineación">
+          <span>Alineación</span>
+        </div>
+        <div class="servicio-item" onclick="toggleServicio(this)">
+          <input type="checkbox" value="Balanceo">
+          <span>Balanceo</span>
+        </div>
+        <div class="servicio-item" onclick="toggleServicio(this)">
+          <input type="checkbox" value="Cambio de pastillas">
+          <span>Cambio de pastillas</span>
+        </div>
+        <div class="servicio-item" onclick="toggleServicio(this)">
+          <input type="checkbox" value="Revisión general">
+          <span>Revisión general</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Observaciones</label>
+      <textarea id="observaciones" placeholder="Ej: El auto hace ruido al frenar..."></textarea>
+    </div>
+
+    <button class="btn" id="btnEnviar" onclick="enviarPresupuesto()">Generar y enviar presupuesto</button>
+
+    <div class="mensaje" id="mensaje"></div>
+  </div>
+
+  <script>
+    const WEBHOOK_URL = 'https://n8n.agencia.network/webhook/9d8a00eb-f994-4f96-87ef-3cf03800fca8e';
+
+    function toggleServicio(el) {
+      const cb = el.querySelector('input[type="checkbox"]');
+      cb.checked = !cb.checked;
+      el.classList.toggle('selected', cb.checked);
+    }
+
+    async function enviarPresupuesto() {
+      const nombre = document.getElementById('nombre').value.trim();
+      const telefono = document.getElementById('telefono').value.trim();
+      const patente = document.getElementById('patente').value.trim().toUpperCase();
+      const vehiculo = document.getElementById('vehiculo').value.trim();
+      const observaciones = document.getElementById('observaciones').value.trim();
+
+      const checkboxes = document.querySelectorAll('#serviciosGrid input[type="checkbox"]:checked');
+      const servicios = Array.from(checkboxes).map(cb => cb.value).join(', ');
+
+      if (!nombre || !telefono || !patente || !vehiculo || !servicios) {
+        mostrarMensaje('Por favor completá todos los campos obligatorios y seleccioná al menos un servicio.', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btnEnviar');
+      btn.disabled = true;
+      btn.textContent = 'Enviando...';
+
+      try {
+        await fetch(WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre, telefono, patente, vehiculo, servicios, observaciones })
+        });
+        mostrarMensaje('✅ Presupuesto generado y enviado correctamente al cliente.', 'exito');
+        btn.textContent = 'Enviado ✓';
+      } catch (e) {
+        mostrarMensaje('❌ Error al enviar. Revisá tu conexión e intentá de nuevo.', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Generar y enviar presupuesto';
+      }
+    }
+
+    function mostrarMensaje(texto, tipo) {
+      const el = document.getElementById('mensaje');
+      el.textContent = texto;
+      el.className = 'mensaje ' + tipo;
+      el.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
