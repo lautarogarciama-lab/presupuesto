@@ -90,6 +90,12 @@
       font-size: 13px;
       color: #333;
     }
+    .servicios-loading {
+      text-align: center;
+      padding: 16px;
+      color: #888;
+      font-size: 13px;
+    }
     .btn {
       width: 100%;
       padding: 14px;
@@ -147,26 +153,7 @@
     <div class="field">
       <label>Servicios solicitados *</label>
       <div class="servicios-grid" id="serviciosGrid">
-        <div class="servicio-item" onclick="toggleServicio(this)">
-          <input type="checkbox" value="Cambio de aceite">
-          <span>Cambio de aceite</span>
-        </div>
-        <div class="servicio-item" onclick="toggleServicio(this)">
-          <input type="checkbox" value="Alineación">
-          <span>Alineación</span>
-        </div>
-        <div class="servicio-item" onclick="toggleServicio(this)">
-          <input type="checkbox" value="Balanceo">
-          <span>Balanceo</span>
-        </div>
-        <div class="servicio-item" onclick="toggleServicio(this)">
-          <input type="checkbox" value="Cambio de pastillas">
-          <span>Cambio de pastillas</span>
-        </div>
-        <div class="servicio-item" onclick="toggleServicio(this)">
-          <input type="checkbox" value="Revisión general">
-          <span>Revisión general</span>
-        </div>
+        <div class="servicios-loading">Cargando servicios...</div>
       </div>
     </div>
 
@@ -182,6 +169,37 @@
 
   <script>
     const WEBHOOK_URL = 'https://n8n.agencia.network/webhook/9d8a00eb-f9f4-4f16-87ef-3cf09001ce8e';
+    const SUPABASE_URL = 'https://haijwqzjdpewlbjnpfwm.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhhaWp3cXpqZHBld2xiam5wZndtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTMyNTAwMywiZXhwIjoyMDk2OTAxMDAzfQ.pMfHVWvGTgQqZj7YzS_3dikrW0-hX5POl1Iva-il89Y';
+
+    // Cargar servicios desde Supabase al abrir el formulario
+    async function cargarServicios() {
+      const grid = document.getElementById('serviciosGrid');
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/servicios?select=nombre&order=nombre.asc`, {
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+          }
+        });
+        const servicios = await res.json();
+
+        if (!servicios || servicios.length === 0) {
+          grid.innerHTML = '<div class="servicios-loading">No hay servicios disponibles.</div>';
+          return;
+        }
+
+        grid.innerHTML = servicios.map(s => `
+          <div class="servicio-item" onclick="toggleServicio(this)">
+            <input type="checkbox" value="${s.nombre}">
+            <span>${s.nombre}</span>
+          </div>
+        `).join('');
+
+      } catch (e) {
+        grid.innerHTML = '<div class="servicios-loading">Error al cargar servicios.</div>';
+      }
+    }
 
     function toggleServicio(el) {
       const cb = el.querySelector('input[type="checkbox"]');
@@ -229,6 +247,9 @@
       el.className = 'mensaje ' + tipo;
       el.style.display = 'block';
     }
+
+    // Cargar servicios al abrir la página
+    cargarServicios();
   </script>
 </body>
 </html>
